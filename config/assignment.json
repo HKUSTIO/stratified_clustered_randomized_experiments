@@ -1,0 +1,44 @@
+{
+  "seed_stratified_population": 101,
+  "seed_stratified_assignment": 909,
+  "seed_clustered_population": 202,
+  "seed_clustered_assignment": 808,
+  "fisher_replications": 600,
+  "alpha": 0.05,
+  "stratified": {
+    "n_total": 1800,
+    "strata": ["A", "B"],
+    "stratum_weights": {
+      "A": 0.58,
+      "B": 0.42
+    },
+    "treat_propensity_by_stratum": {
+      "A": 0.32,
+      "B": 0.68
+    },
+    "tau_by_stratum": {
+      "A": 0.22,
+      "B": 0.28
+    },
+    "sd_y0_by_stratum": {
+      "A": 0.12,
+      "B": 0.12
+    },
+    "sd_y1_by_stratum": {
+      "A": 0.12,
+      "B": 0.12
+    },
+    "lambda_by_stratum": {
+      "A": 0.126208,
+      "B": 0.091392
+    }
+  },
+  "clustered": {
+    "g_total": 90,
+    "cluster_size_poisson_lambda": 95,
+    "treated_cluster_share": 0.52,
+    "tau_cluster_abs_normal_scale": 1.0,
+    "sd_y0": 1.0,
+    "sd_y1": 1.0
+  }
+}

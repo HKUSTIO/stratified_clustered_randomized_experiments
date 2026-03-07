@@ -1,0 +1,280 @@
+name: Autograding Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
+jobs:
+  autograde:
+    name: Run Grading
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Set up Quarto
+        uses: quarto-dev/quarto-actions/setup@v2
+
+      - name: Core test 1 compute n1 by stratum
+        id: core-test-1
+        continue-on-error: true
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: Core test 1 compute n1 by stratum
+          setup-command: ""
+          command: uv run pytest tests/test_core.py::test_compute_n1_by_stratum -q
+          timeout: 10
+          max-score: 6
+
+      - name: Core test 2 stratified potential outcomes
+        id: core-test-2
+        continue-on-error: true
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: Core test 2 stratified potential outcomes
+          setup-command: ""
+          command: uv run pytest tests/test_core.py::test_generate_potential_outcomes_stratified_columns_and_size -q
+          timeout: 10
+          max-score: 6
+
+      - name: Core test 3 stratified assignment counts
+        id: core-test-3
+        continue-on-error: true
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: Core test 3 stratified assignment counts
+          setup-command: ""
+          command: uv run pytest tests/test_core.py::test_assign_treatment_stratified_counts -q
+          timeout: 10
+          max-score: 6
+
+      - name: Core test 4 clustered generation and assignment
+        id: core-test-4
+        continue-on-error: true
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: Core test 4 clustered generation and assignment
+          setup-command: ""
+          command: uv run pytest tests/test_core.py::test_generate_and_assign_clustered -q
+          timeout: 10
+          max-score: 10
+
+      - name: Core test 5 statistics and confidence intervals
+        id: core-test-5
+        continue-on-error: true
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: Core test 5 statistics and confidence intervals
+          setup-command: ""
+          command: uv run pytest tests/test_core.py::test_statistics_and_ci_on_fixed_data -q
+          timeout: 10
+          max-score: 16
+
+      - name: Core test 6 Fisher p-value
+        id: core-test-6
+        continue-on-error: true
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: Core test 6 Fisher p-value
+          setup-command: ""
+          command: uv run pytest tests/test_core.py::test_fisher_pvalue_known_case -q
+          timeout: 10
+          max-score: 12
+
+      - name: Core test 7 required project files
+        id: core-test-7
+        continue-on-error: true
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: Core test 7 required project files
+          setup-command: ""
+          command: uv run pytest tests/test_workflow_modifiable.py::test_required_project_files_exist -q
+          timeout: 10
+          max-score: 2
+
+      - name: Core test 8 report references pipeline script
+        id: core-test-8
+        continue-on-error: true
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: Core test 8 report references pipeline script
+          setup-command: ""
+          command: uv run pytest tests/test_workflow_modifiable.py::test_report_references_run_script -q
+          timeout: 10
+          max-score: 2
+
+      - name: Prepare report artifacts
+        run: uv run python scripts/run_cleaning.py && uv run python scripts/run_analysis.py && uv run quarto render report/solution.qmd
+
+      - name: Report test 1 output files
+        id: report-test-1
+        continue-on-error: true
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: Report test 1 output files
+          setup-command: ""
+          command: uv run pytest tests/test_report.py::test_output_files_exist_after_run -q
+          timeout: 10
+          max-score: 12
+
+      - name: Report test 2 results keys
+        id: report-test-2
+        continue-on-error: true
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: Report test 2 results keys
+          setup-command: ""
+          command: uv run pytest tests/test_report.py::test_results_json_keys -q
+          timeout: 10
+          max-score: 14
+
+      - name: Report test 3 rendered html sections
+        id: report-test-3
+        continue-on-error: true
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: Report test 3 rendered html sections
+          setup-command: ""
+          command: uv run pytest tests/test_report.py::test_rendered_html_exists_and_contains_sections -q
+          timeout: 10
+          max-score: 14
+
+      - name: Classroom reporter
+        if: always()
+        id: grading-reporter
+        uses: classroom-resources/autograding-grading-reporter@v1
+        env:
+          CORE-TEST-1_RESULTS: "${{ steps.core-test-1.outputs.result }}"
+          CORE-TEST-2_RESULTS: "${{ steps.core-test-2.outputs.result }}"
+          CORE-TEST-3_RESULTS: "${{ steps.core-test-3.outputs.result }}"
+          CORE-TEST-4_RESULTS: "${{ steps.core-test-4.outputs.result }}"
+          CORE-TEST-5_RESULTS: "${{ steps.core-test-5.outputs.result }}"
+          CORE-TEST-6_RESULTS: "${{ steps.core-test-6.outputs.result }}"
+          CORE-TEST-7_RESULTS: "${{ steps.core-test-7.outputs.result }}"
+          CORE-TEST-8_RESULTS: "${{ steps.core-test-8.outputs.result }}"
+          REPORT-TEST-1_RESULTS: "${{ steps.report-test-1.outputs.result }}"
+          REPORT-TEST-2_RESULTS: "${{ steps.report-test-2.outputs.result }}"
+          REPORT-TEST-3_RESULTS: "${{ steps.report-test-3.outputs.result }}"
+        with:
+          runners: core-test-1,core-test-2,core-test-3,core-test-4,core-test-5,core-test-6,core-test-7,core-test-8,report-test-1,report-test-2,report-test-3
+
+      - name: Generate feedback content
+        if: always()
+        run: |
+          python - <<'PY'
+          import base64
+          import json
+          import os
+
+          ORDER = [
+              "core-test-1",
+              "core-test-2",
+              "core-test-3",
+              "core-test-4",
+              "core-test-5",
+              "core-test-6",
+              "core-test-7",
+              "core-test-8",
+              "report-test-1",
+              "report-test-2",
+              "report-test-3",
+          ]
+
+          rows = []
+          for step_id in ORDER:
+              raw = (os.environ.get(step_id.upper().replace("-", "_") + "_RESULT", "") or "").strip()
+              if raw:
+                  try:
+                      decoded = base64.b64decode(raw).decode("utf-8")
+                  except Exception:
+                      raise ValueError(f"Invalid base64 grader result for {step_id}: {raw!r}")
+                  if not (decoded.startswith("{") and decoded.endswith("}")):
+                      raise ValueError(f"Invalid decoded grader result for {step_id}: {decoded!r}")
+                  result = json.loads(decoded)
+                  if not isinstance(result, dict):
+                      raise ValueError(f"Invalid grader result type for {step_id}: {type(result).__name__}")
+                  name = result.get("name", step_id)
+                  max_score = int(result.get("max_score", 0))
+                  if "score" in result:
+                      score = int(result["score"])
+                  else:
+                      tests = result.get("tests", [])
+                      score = int(sum(int(test.get("score", 0)) for test in tests))
+              else:
+                  name = step_id
+                  score = 0
+                  max_score = 0
+              status = "pass" if score == max_score else "fail"
+              rows.append((name, status, score, max_score))
+
+          total = sum(score for _, _, score, _ in rows)
+          with open("comment.md", "w", encoding="utf-8") as f:
+              f.write("## Autograding Results\n\n")
+              f.write("| Component | Status | Points |\n")
+              f.write("|-----------|--------|--------|\n")
+              for name, status, score, max_score in rows:
+                  f.write(f"| {name} | {status} | {score}/{max_score} |\n")
+              f.write(f"| Total |  | {total}/100 |\n")
+          PY
+        env:
+          CORE_TEST_1_RESULT: ${{ steps.core-test-1.outputs.result }}
+          CORE_TEST_2_RESULT: ${{ steps.core-test-2.outputs.result }}
+          CORE_TEST_3_RESULT: ${{ steps.core-test-3.outputs.result }}
+          CORE_TEST_4_RESULT: ${{ steps.core-test-4.outputs.result }}
+          CORE_TEST_5_RESULT: ${{ steps.core-test-5.outputs.result }}
+          CORE_TEST_6_RESULT: ${{ steps.core-test-6.outputs.result }}
+          CORE_TEST_7_RESULT: ${{ steps.core-test-7.outputs.result }}
+          CORE_TEST_8_RESULT: ${{ steps.core-test-8.outputs.result }}
+          REPORT_TEST_1_RESULT: ${{ steps.report-test-1.outputs.result }}
+          REPORT_TEST_2_RESULT: ${{ steps.report-test-2.outputs.result }}
+          REPORT_TEST_3_RESULT: ${{ steps.report-test-3.outputs.result }}
+
+      - name: Publish run summary
+        if: always()
+        run: cat comment.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Post comment to PR
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const comment = fs.readFileSync('comment.md', 'utf8');
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const botComment = comments.find(c => c.user.type === 'Bot' && c.body.includes('Autograding Results'));
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: comment,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: comment,
+              });
+            }

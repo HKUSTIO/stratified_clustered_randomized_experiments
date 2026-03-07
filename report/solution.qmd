@@ -1,0 +1,28 @@
+---
+title: "Stratified and Clustered Randomized Experiments Assignment"
+format:
+  html:
+    embed-resources: true
+---
+
+This report documents your implementation of stratified and clustered randomized experiments. Run `python scripts/run_pipeline.py` from the project root before completing this file. The pipeline maps input to cleaned and cleaned to output, and your reported values should come from `output/results.json`.
+
+## Fisher randomization inference
+
+| statistic_variant | pvalue |
+|---|---:|
+| stratified_diff_in_means | |
+| stratified_weighted | |
+| clustered_unit_diff_in_means | |
+| clustered_cluster_average | |
+
+## Neyman inference
+
+| estimator | tau_hat | se_hat | ci_lower | ci_upper |
+|---|---:|---:|---:|---:|
+| stratified_weighted | | | | |
+| clustered_cluster_average | | | | |
+
+## Brief interpretation
+
+Explain why the p-values and confidence intervals differ between stratified and clustered analyses and between weighted and unweighted statistics.
